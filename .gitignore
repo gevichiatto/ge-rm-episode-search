@@ -1,0 +1,50 @@
+# ------------------------------------------------------------------
+# ge-rm-episode-search · Next.js 16 · React 19 · pnpm
+# ------------------------------------------------------------------
+
+# --- Dependências -------------------------------------------------
+node_modules
+.pnpm-store
+.pnp
+.pnp.*
+.npm
+
+# --- Builds & dist ------------------------------------------------
+dist
+dist-ssr
+out
+build
+.next
+
+# --- Testes / coverage ---------------------------------------------
+coverage
+
+# --- Ambiente (nunca commitar segredos) ----------------------------
+.env
+.env.*
+!.env.example
+
+# --- Logs & debug ---------------------------------------------------
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Sistema / macOS ------------------------------------------------
+.DS_Store
+Thumbs.db
+
+# --- Editores & IDEs -------------------------------------------------
+.idea
+.vscode
+*.swp
+
+# --- TypeScript ------------------------------------------------------
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# --- Geração automática (recriado por `next dev` / `next build`) ----
+next-env.d.ts
+
+# --- Deploy / Vercel ---------------------------------------------------
+.vercel
