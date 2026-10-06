@@ -2,11 +2,16 @@ import { getCharactersByIds, getEpisodeByCode, getEpisodeById } from "@/lib/rick
 import { EpisodeNotFoundError } from "@/lib/rickandmorty/errors";
 import { parseEpisodeInput } from "@/lib/rickandmorty/input";
 import type { Episode } from "@/lib/rickandmorty/schemas";
-import { extractCharacterIds, sortCharacterNames } from "@/lib/utils/character";
+import { disambiguateNames, extractCharacterIds, sortByName } from "@/lib/utils/character";
+
+export interface CharacterSummary {
+  name: string;
+  image: string;
+}
 
 export interface EpisodeCharacters {
   episode: Episode;
-  characters: string[];
+  characters: CharacterSummary[];
 }
 
 async function findEpisode(input: string): Promise<Episode> {
@@ -24,7 +29,7 @@ async function findEpisode(input: string): Promise<Episode> {
 }
 
 /**
- * Busca os nomes dos personagens de um episódio (por id ou código S01E01),
+ * Busca os personagens (nome e imagem) de um episódio (por id ou código S01E01),
  * em ordem alfabética.
  */
 export async function getCharactersByEpisode(input: string): Promise<EpisodeCharacters> {
@@ -37,8 +42,10 @@ export async function getCharactersByEpisode(input: string): Promise<EpisodeChar
   }
 
   const characters = await getCharactersByIds(ids);
-  return {
-    episode,
-    characters: sortCharacterNames(characters.map((character) => character.name)),
-  };
+  const names = disambiguateNames(characters);
+  const summaries = characters.map((character, index) => ({
+    name: names[index] ?? character.name,
+    image: character.image,
+  }));
+  return { episode, characters: sortByName(summaries) };
 }
