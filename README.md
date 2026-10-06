@@ -64,7 +64,7 @@ tests/lib/      testes unitários (Vitest)
 - **Zod na borda.** Respostas da API, parâmetros da URL e variáveis de ambiente são validados; os tipos vêm de `z.infer`.
 - **A API devolve formatos diferentes** para `/character/{ids}`: objeto para um id, array para vários. O schema normaliza para array. Com zero personagens, `/character/` não é chamado (retornaria a lista inteira).
 - **Ordem alfabética com `localeCompare`**, não `.sort()` puro, que ordenaria por code point.
-- **Nomes duplicados** (ex.: o episódio 6 tem vários "Jerry Smith") recebem a origem entre parênteses: `Jerry Smith (Earth (C-137))`. Nomes únicos ficam intactos.
+- **Nomes duplicados** (ex.: o episódio 6 tem vários "Jerry Smith") recebem a origem entre parênteses: `Jerry Smith (Earth (C-137))`. Se nome e origem também coincidirem, acrescenta ` #1`, ` #2`… pela ordem do id. Nomes únicos ficam intactos.
 - **Imagens via `next/image`**, restritas por `images.remotePatterns` aos avatares da API.
 - **Sem cache próprio.** Fica como evolução (ver abaixo), para evitar resultados desatualizados.
 

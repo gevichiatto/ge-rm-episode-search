@@ -88,11 +88,12 @@ export async function getEpisodeByCode(code: string) {
     const data = await response.json();
     const paginatedData = paginatedEpisodeSchema.parse(data);
 
-    if (paginatedData.results.length === 0) {
+    const [first] = paginatedData.results;
+    if (!first) {
       throw new EpisodeNotFoundError(`Episode with code ${code} not found`);
     }
 
-    return paginatedData.results[0];
+    return first;
   } catch (error) {
     // If it's already an EpisodeNotFoundError, re-throw it
     if (error instanceof EpisodeNotFoundError) {

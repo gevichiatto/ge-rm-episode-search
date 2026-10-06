@@ -1,5 +1,4 @@
 import { getCharactersByIds, getEpisodeByCode, getEpisodeById } from "@/lib/rickandmorty/client";
-import { EpisodeNotFoundError } from "@/lib/rickandmorty/errors";
 import { parseEpisodeInput } from "@/lib/rickandmorty/input";
 import type { Episode } from "@/lib/rickandmorty/schemas";
 import { disambiguateNames, extractCharacterIds, sortByName } from "@/lib/utils/character";
@@ -21,11 +20,7 @@ async function findEpisode(input: string): Promise<Episode> {
     return getEpisodeById(parsed.id);
   }
 
-  const episode = await getEpisodeByCode(parsed.code);
-  if (!episode) {
-    throw new EpisodeNotFoundError(`Episode with code ${parsed.code} not found`);
-  }
-  return episode;
+  return getEpisodeByCode(parsed.code);
 }
 
 /**

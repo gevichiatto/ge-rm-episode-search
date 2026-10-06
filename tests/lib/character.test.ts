@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  disambiguateNames,
-  extractCharacterIds,
-  sortByName,
-  sortCharacterNames,
-} from "@/lib/utils/character";
+import { disambiguateNames, extractCharacterIds, sortByName } from "@/lib/utils/character";
 
 describe("extractCharacterIds", () => {
   it("extrai IDs de URLs válidas", () => {
@@ -39,32 +34,13 @@ describe("extractCharacterIds", () => {
   });
 });
 
-describe("sortCharacterNames", () => {
-  it("ordena nomes em ordem alfabética", () => {
-    const names = ["Morty Smith", "Rick Sanchez", "Summer Smith", "Beth Smith"];
-    expect(sortCharacterNames(names)).toEqual([
-      "Beth Smith",
-      "Morty Smith",
-      "Rick Sanchez",
-      "Summer Smith",
-    ]);
-  });
-
-  it("ordena nomes com acentos corretamente", () => {
-    const names = ["Zé", "Álvaro", "Carlos", "Beto"];
-    expect(sortCharacterNames(names)).toEqual(["Álvaro", "Beto", "Carlos", "Zé"]);
-  });
-
-  it("não modifica o array original", () => {
-    const names = ["Morty Smith", "Rick Sanchez"];
-    const original = [...names];
-    sortCharacterNames(names);
-    expect(names).toEqual(original);
-  });
-});
-
 describe("disambiguateNames", () => {
-  const char = (name: string, origin: string) => ({ name, origin: { name: origin } });
+  let nextId = 1;
+  const char = (name: string, origin: string, id = nextId++) => ({
+    id,
+    name,
+    origin: { name: origin },
+  });
 
   it("mantém nomes únicos sem alteração", () => {
     expect(
@@ -85,12 +61,44 @@ describe("disambiguateNames", () => {
     ]);
   });
 
+  it("numera por id quando nome e origem coincidem", () => {
+    const result = disambiguateNames([
+      char("Jerry Smith", "Earth", 30),
+      char("Beth Smith", "Earth", 5),
+      char("Jerry Smith", "Earth", 10),
+      char("Jerry Smith", "Mars", 20),
+    ]);
+    expect(result).toEqual([
+      "Jerry Smith (Earth) #2",
+      "Beth Smith",
+      "Jerry Smith (Earth) #1",
+      "Jerry Smith (Mars)",
+    ]);
+  });
+
   it("retorna lista vazia para entrada vazia", () => {
     expect(disambiguateNames([])).toEqual([]);
   });
 });
 
 describe("sortByName", () => {
+  it("ordena nomes em ordem alfabética", () => {
+    const names = ["Morty Smith", "Rick Sanchez", "Summer Smith", "Beth Smith"].map((name) => ({
+      name,
+    }));
+    expect(sortByName(names).map((i) => i.name)).toEqual([
+      "Beth Smith",
+      "Morty Smith",
+      "Rick Sanchez",
+      "Summer Smith",
+    ]);
+  });
+
+  it("ordena nomes com acentos corretamente", () => {
+    const names = ["Zé", "Álvaro", "Carlos", "Beto"].map((name) => ({ name }));
+    expect(sortByName(names).map((i) => i.name)).toEqual(["Álvaro", "Beto", "Carlos", "Zé"]);
+  });
+
   it("ordena por nome e não modifica a entrada", () => {
     const items = [
       { name: "Morty", image: "b" },

@@ -22,34 +22,44 @@ export function extractCharacterIds(urls: string[]): number[] {
 }
 
 /**
- * Ordena nomes de personagens em ordem alfabética.
- *
- * @param names - Array de nomes
- * @returns Array de nomes ordenados (usando localeCompare para acentos)
- */
-export function sortCharacterNames(names: string[]): string[] {
-  return [...names].sort((a, b) => a.localeCompare(b));
-}
-
-/**
  * Gera os nomes exibidos, acrescentando a origem entre parênteses apenas
  * quando o mesmo nome aparece mais de uma vez
  * (ex.: `Jerry Smith (Earth (C-137))`).
  *
- * @param characters - Personagens com `name` e `origin.name`
+ * Se mesmo assim houver rótulos idênticos (mesmo nome e mesma origem), acrescenta
+ * ` #n`, numerando pela ordem crescente de `id` para o resultado ser estável.
+ *
+ * @param characters - Personagens com `id`, `name` e `origin.name`
  * @returns Nomes na mesma ordem de entrada
  */
 export function disambiguateNames(
-  characters: readonly { name: string; origin: { name: string } }[],
+  characters: readonly { id: number; name: string; origin: { name: string } }[],
 ): string[] {
-  const counts = new Map<string, number>();
+  const nameCounts = new Map<string, number>();
   for (const { name } of characters) {
-    counts.set(name, (counts.get(name) ?? 0) + 1);
+    nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1);
   }
 
-  return characters.map(({ name, origin }) =>
-    (counts.get(name) ?? 0) > 1 ? `${name} (${origin.name})` : name,
+  const labels = characters.map(({ name, origin }) =>
+    (nameCounts.get(name) ?? 0) > 1 ? `${name} (${origin.name})` : name,
   );
+
+  const labelCounts = new Map<string, number>();
+  for (const label of labels) {
+    labelCounts.set(label, (labelCounts.get(label) ?? 0) + 1);
+  }
+
+  return labels.map((label, index) => {
+    if ((labelCounts.get(label) ?? 0) < 2) return label;
+    const self = characters[index];
+    const rank =
+      characters.filter(
+        (other, i) =>
+          labels[i] === label &&
+          (other.id < (self?.id ?? 0) || (other.id === self?.id && i < index)),
+      ).length + 1;
+    return `${label} #${rank}`;
+  });
 }
 
 /**
