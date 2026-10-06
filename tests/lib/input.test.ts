@@ -29,7 +29,11 @@ describe("parseEpisodeInput", () => {
     expect((parseEpisodeInput("0051") as { id: number }).id).toBe(51);
   });
 
-  it.each(["52", "0", "99999999999999999999", "1 5", "S1E1", "S01E1", " 15"])(
+  it.each(["52", "999", "9007199254740991"])("aceita o id %s sem limite superior fixo", (value) => {
+    expect(parseEpisodeInput(value)).toEqual({ type: "id", id: Number(value) });
+  });
+
+  it.each(["0", "9007199254740992", "99999999999999999999", "1 5", "S1E1", "S01E1", " 15"])(
     "lança ValidationError para %j",
     (value) => {
       expect(() => parseEpisodeInput(value)).toThrow(ValidationError);

@@ -5,7 +5,9 @@ import { ValidationError } from "../rickandmorty/errors";
  * Schema Zod para validar a entrada do usuário.
  *
  * Aceita:
- * - dígitos válidos (sem `0`, sem sinal); zeros à esquerda são normalizados (`0051` → 51)
+ * - dígitos válidos (inteiro positivo seguro, sem `0`, sem sinal); zeros à esquerda são
+ *   normalizados (`0051` → 51). Não há limite superior fixo: quem decide se o episódio
+ *   existe é a API (404).
  * - `S\d{2}E\d{2}` (case-insensitive, normaliza para `S02E04`)
  *
  * Rejeita:
@@ -18,13 +20,13 @@ import { ValidationError } from "../rickandmorty/errors";
  * - `S2E04` (sem padding)
  */
 export const episodeInputSchema = z.union([
-  // ID numérico (1-51)
+  // ID numérico
   z
     .string()
     .regex(/^\d+$/, "O ID do episódio deve ser um número inteiro positivo.")
     .transform((id) => parseInt(id, 10))
-    .refine((id) => id >= 1 && id <= 51, {
-      message: "O ID do episódio deve estar entre 1 e 51.",
+    .refine((id) => Number.isSafeInteger(id) && id >= 1, {
+      message: "O ID do episódio deve ser um número inteiro positivo.",
     })
     .transform((id) => ({ type: "id" as const, id })),
 
