@@ -90,7 +90,7 @@ pnpm validate    # lint + typecheck + testes + format
 
 Os testes cobrem validação de entrada, hierarquia de erros, o service (um personagem vs. vários, zero personagens, 404, 5xx, timeout, payload inválido, desambiguação, imagens) e os utilitários de ordenação. Não há testes de componente nem E2E.
 
-A CI (`.github/workflows/ci.yml`) roda em PRs e em `master`: `pnpm typegen`, `pnpm validate`, `pnpm test` e `pnpm build`. Hooks do Husky + commitlint impõem commits no formato Conventional Commits.
+A CI (`.github/workflows/ci.yml`) roda em PRs e em `master`: `pnpm typegen`, `pnpm validate` (que já inclui os testes, então eles rodam uma única vez) e `pnpm build`. O workflow tem permissão só de leitura, cancela execuções antigas do mesmo PR e fixa as actions por SHA; o Dependabot (`.github/dependabot.yml`) atualiza dependências npm toda semana e actions todo mês. Hooks do Husky + commitlint impõem commits no formato Conventional Commits.
 
 ## Limitações e próximos passos
 
