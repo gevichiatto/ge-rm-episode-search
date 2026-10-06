@@ -27,7 +27,7 @@
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
@@ -43,7 +43,7 @@
   },
   "packageManager": "pnpm@12.9.1",
   "engines": {
-    "node": ">=22",
-    "pnpm": ">=10"
+    "node": ">=24",
+    "pnpm": ">=12.9.1"
   }
 }
