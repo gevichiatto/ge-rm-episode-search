@@ -16,7 +16,7 @@ export function ErrorMessage({ code, query }: ErrorMessageProps) {
   return (
     <div
       role="alert"
-      className="flex flex-col gap-3 rounded-md border border-red-600 p-4 text-red-700 dark:text-red-400"
+      className="flex flex-col gap-3 rounded-xl border border-red-600 p-4 text-red-700 dark:text-red-400"
     >
       <p>{messages.errors[code]}</p>
       {canRetry && (

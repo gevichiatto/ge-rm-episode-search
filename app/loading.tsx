@@ -7,8 +7,9 @@ export default function Loading() {
         {messages.loading}
       </p>
       <div aria-hidden="true" className="flex animate-pulse flex-col gap-3">
-        <div className="h-9 w-2/3 rounded bg-zinc-300 dark:bg-zinc-700" />
-        <div className="h-10 w-full rounded bg-zinc-300 dark:bg-zinc-700" />
+        <div className="mx-auto size-16 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+        <div className="mx-auto h-9 w-2/3 rounded bg-zinc-300 dark:bg-zinc-700" />
+        <div className="h-12 w-full rounded-full bg-zinc-300 dark:bg-zinc-700" />
         <div className="h-5 w-1/2 rounded bg-zinc-300 dark:bg-zinc-700" />
         <div className="h-5 w-1/3 rounded bg-zinc-300 dark:bg-zinc-700" />
         <div className="h-5 w-2/5 rounded bg-zinc-300 dark:bg-zinc-700" />

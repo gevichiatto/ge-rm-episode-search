@@ -19,11 +19,11 @@ export function SearchForm({ defaultValue }: SearchFormProps) {
         required
         placeholder={messages.searchPlaceholder}
         defaultValue={defaultValue}
-        className="flex-1 rounded-md border border-zinc-400 bg-transparent px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+        className="flex-1 rounded-full border border-zinc-400 bg-transparent px-5 py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
       />
       <button
         type="submit"
-        className="rounded-md bg-foreground px-4 py-2 font-medium text-background focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+        className="rounded-full bg-accent px-6 py-3 font-semibold text-accent-foreground transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
       >
         {messages.searchButton}
       </button>
