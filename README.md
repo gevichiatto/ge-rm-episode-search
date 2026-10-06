@@ -20,16 +20,17 @@ Nenhuma variável é obrigatória. Para sobrescrever os padrões, copie `.env.ex
 
 ### Scripts
 
-| Script           | O que faz                                  |
-| ---------------- | ------------------------------------------ |
-| `pnpm dev`       | Servidor de desenvolvimento                |
-| `pnpm build`     | Build de produção                          |
-| `pnpm start`     | Serve o build de produção                  |
-| `pnpm lint`      | ESLint                                     |
-| `pnpm typecheck` | `tsc --noEmit`                             |
-| `pnpm format`    | Prettier (`format:check` apenas verifica)  |
-| `pnpm test`      | Vitest (`test:watch` para modo interativo) |
-| `pnpm validate`  | lint + typecheck + testes + format:check   |
+| Script               | O que faz                                   |
+| -------------------- | ------------------------------------------- |
+| `pnpm dev`           | Servidor de desenvolvimento                 |
+| `pnpm build`         | Build de produção                           |
+| `pnpm start`         | Serve o build de produção                   |
+| `pnpm lint`          | ESLint                                      |
+| `pnpm typecheck`     | `tsc --noEmit`                              |
+| `pnpm format`        | Prettier (`format:check` apenas verifica)   |
+| `pnpm test`          | Vitest (`test:watch` para modo interativo)  |
+| `pnpm test:coverage` | Vitest com relatório de cobertura           |
+| `pnpm validate`      | lint + typecheck + cobertura + format:check |
 
 ## Como funciona
 
@@ -52,7 +53,7 @@ lib/
   messages.ts   todo texto visível ao usuário (pt-BR)
   rickandmorty/ client, service, schemas, errors, input
   utils/        ordenação e desambiguação de nomes
-tests/lib/      testes unitários (Vitest)
+tests/          lib/, config/ e components/ (Vitest)
 ```
 
 ## Decisões
@@ -88,13 +89,13 @@ pnpm test        # Vitest
 pnpm validate    # lint + typecheck + testes + format
 ```
 
-Os testes cobrem validação de entrada, hierarquia de erros, o service (um personagem vs. vários, zero personagens, 404, 5xx, timeout, payload inválido, desambiguação, imagens) e os utilitários de ordenação. Não há testes de componente nem E2E.
+Os testes (`pnpm test:coverage` gera o relatório em `coverage/` e falha abaixo dos pisos definidos em `vitest.config.mjs`) cobrem validação de entrada, hierarquia de erros, o service (um personagem vs. vários, zero personagens, 404, 5xx, timeout, payload inválido, desambiguação, imagens) os utilitários de ordenação, a CSP e os componentes (Testing Library + jsdom, em `tests/components/`). Não há E2E.
 
-A CI (`.github/workflows/ci.yml`) roda em PRs e em `master`: `pnpm typegen`, `pnpm validate` (que já inclui os testes, então eles rodam uma única vez) e `pnpm build`. O workflow tem permissão só de leitura, cancela execuções antigas do mesmo PR e fixa as actions por SHA; o Dependabot (`.github/dependabot.yml`) atualiza dependências npm toda semana e actions todo mês. Hooks do Husky + commitlint impõem commits no formato Conventional Commits.
+A CI (`.github/workflows/ci.yml`) roda em PRs e em `master`: `pnpm typegen`, `pnpm validate` (que roda os testes com cobertura e aplica os pisos, então eles rodam uma única vez) e `pnpm build`. O workflow tem permissão só de leitura, cancela execuções antigas do mesmo PR e fixa as actions por SHA; o Dependabot (`.github/dependabot.yml`) atualiza dependências npm toda semana e actions todo mês. Hooks do Husky + commitlint impõem commits no formato Conventional Commits.
 
 ## Limitações e próximos passos
 
-- Sem testes de componente ou E2E (Playwright).
+- Sem E2E (Playwright).
 - Sem cache de resultados; se necessário, `revalidateTag` por episódio.
 - Sem paginação: a API aceita um lote de ids, e uma chamada basta para este escopo.
 - Apenas pt-BR.
