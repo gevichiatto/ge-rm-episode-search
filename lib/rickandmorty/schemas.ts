@@ -53,3 +53,5 @@ export const normalizedCharacterSchema = z
     }
     return [data];
   });
+
+export type Episode = z.infer<typeof episodeSchema>;
