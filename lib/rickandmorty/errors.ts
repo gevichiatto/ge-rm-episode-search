@@ -5,7 +5,7 @@
  * `instanceof` em cada ponto de uso.
  */
 export type EpisodeSearchErrorCode =
-  "validation" | "episode-not-found" | "upstream" | "network" | "timeout";
+  "validation" | "episode-not-found" | "upstream" | "network" | "timeout" | "rate-limited";
 
 /**
  * Classe-base de todos os erros tipados lançados pelo módulo de busca.
@@ -49,7 +49,7 @@ export class EpisodeNotFoundError extends EpisodeSearchError {
 /**
  * Falha causada pela API upstream:
  *
- * - resposta HTTP com status não-2xx (429, 5xx, demais 4xx) → `status`
+ * - resposta HTTP com status não-2xx (5xx, demais 4xx; o 429 é `RateLimitedError`) → `status`
  *   carrega o código HTTP recebido;
  * - resposta fora do schema esperado → `status` fica `undefined`.
  */
@@ -90,5 +90,14 @@ export class TimeoutError extends EpisodeSearchError {
     message?: string,
   ) {
     super(message ?? `A requisição à API upstream excedeu o tempo limite de ${timeoutMs} ms.`);
+  }
+}
+
+/** A API respondeu 429: o limite de requisições foi excedido. */
+export class RateLimitedError extends EpisodeSearchError {
+  override readonly code = "rate-limited" as const;
+
+  constructor(message: string = "A API upstream limitou as requisições (HTTP 429).") {
+    super(message);
   }
 }

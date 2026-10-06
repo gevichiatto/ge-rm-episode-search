@@ -5,7 +5,7 @@ import { ErrorMessage } from "@/components/error-message";
 import { messages } from "@/lib/messages";
 import type { EpisodeSearchErrorCode } from "@/lib/rickandmorty/errors";
 
-const retriable: EpisodeSearchErrorCode[] = ["network", "timeout", "upstream"];
+const retriable: EpisodeSearchErrorCode[] = ["network", "timeout", "upstream", "rate-limited"];
 const final: EpisodeSearchErrorCode[] = ["validation", "episode-not-found"];
 
 describe("ErrorMessage", () => {

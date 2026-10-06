@@ -3,6 +3,7 @@ import * as client from "@/lib/rickandmorty/client";
 import {
   EpisodeNotFoundError,
   NetworkError,
+  RateLimitedError,
   TimeoutError,
   UpstreamError,
   ValidationError,
@@ -134,7 +135,8 @@ describe("getCharactersByEpisode", () => {
   });
 
   it.each([
-    ["UpstreamError", new UpstreamError(429)],
+    ["UpstreamError", new UpstreamError(502)],
+    ["RateLimitedError", new RateLimitedError()],
     ["NetworkError", new NetworkError()],
     ["TimeoutError", new TimeoutError(10000)],
   ])("propaga %s dos personagens", async (_name, error) => {
