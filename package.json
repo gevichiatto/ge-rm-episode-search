@@ -14,7 +14,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky",
-    "validate": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run format:check"
+    "validate": "pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run format:check",
+    "typegen": "next typegen"
   },
   "dependencies": {
     "next": "16.3.8",
