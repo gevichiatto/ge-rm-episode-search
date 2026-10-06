@@ -79,6 +79,24 @@ describe("getEpisodeById", () => {
     });
   });
 
+  it("não mascara payload inválido como status 500", async () => {
+    fetchMock.mockResolvedValue(json({ ...episode, id: "15" }));
+
+    await expect(getEpisodeById(15)).rejects.toMatchObject({ status: undefined });
+  });
+
+  it("registra só um resumo do erro, sem o payload", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    fetchMock.mockResolvedValue(json({ ...episode, id: "segredo-no-payload" }));
+
+    await expect(getEpisodeById(15)).rejects.toBeInstanceOf(UpstreamError);
+
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    const [message] = errorSpy.mock.calls[0] ?? [];
+    expect(message).toContain("primeira em id");
+    expect(JSON.stringify(errorSpy.mock.calls)).not.toContain("segredo-no-payload");
+  });
+
   it("lança UpstreamError quando o JSON é inválido", async () => {
     fetchMock.mockResolvedValue(new Response("<html>", { status: 200 }));
 
@@ -100,6 +118,14 @@ describe("getEpisodeByCode", () => {
 
     await expect(getEpisodeByCode("S02E04")).resolves.toEqual(episode);
     expect(fetchMock.mock.calls[0]?.[0]).toBe(`${API}/episode?episode=S02E04`);
+  });
+
+  it("codifica o código na query string", async () => {
+    fetchMock.mockResolvedValue(json({ info: page.info, results: [] }));
+
+    await getEpisodeByCode("S01E01&name=rick#x").catch(() => {});
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(`${API}/episode?episode=S01E01%26name%3Drick%23x`);
   });
 
   it("lança EpisodeNotFoundError quando results é vazio", async () => {
@@ -146,6 +172,16 @@ describe("getCharactersByIds", () => {
     expect(result.map((c) => c.id)).toEqual([1, 2]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0]?.[0]).toBe(`${API}/character/1,2`);
+  });
+
+  it("recusa lista vazia sem chamar a API", async () => {
+    await expect(getCharactersByIds([])).rejects.toBeInstanceOf(RangeError);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each([[[0]], [[-1]], [[1.5]], [[Number.NaN]]])("recusa ids inválidos %j", async (ids) => {
+    await expect(getCharactersByIds(ids)).rejects.toBeInstanceOf(RangeError);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("lança UpstreamError em 5xx", async () => {
