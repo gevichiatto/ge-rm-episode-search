@@ -60,7 +60,31 @@ describe("getCharactersByEpisode", () => {
 
     expect(client.getEpisodeById).toHaveBeenCalledWith(15);
     expect(client.getCharactersByIds).toHaveBeenCalledWith([2, 1]);
-    expect(result.characters).toEqual(["Beth Smith", "Morty Smith", "Summer Smith"]);
+    expect(result.characters.map((c) => c.name)).toEqual([
+      "Beth Smith",
+      "Morty Smith",
+      "Summer Smith",
+    ]);
+    expect(result.characters[0]?.image).toBe(`${API}/character/avatar/3.jpeg`);
+  });
+
+  it("desambigua nomes duplicados com a origem", async () => {
+    vi.mocked(client.getEpisodeById).mockResolvedValue(makeEpisode([1, 2, 3]));
+    const characters = makeCharacters(["Jerry Smith", "Jerry Smith", "Beth Smith"]);
+    const [first, second] = characters;
+    if (first && second) {
+      first.origin.name = "Earth (C-137)";
+      second.origin.name = "Earth (Replacement Dimension)";
+    }
+    vi.mocked(client.getCharactersByIds).mockResolvedValue(characters);
+
+    const result = await getCharactersByEpisode("6");
+
+    expect(result.characters.map((c) => c.name)).toEqual([
+      "Beth Smith",
+      "Jerry Smith (Earth (C-137))",
+      "Jerry Smith (Earth (Replacement Dimension))",
+    ]);
   });
 
   it("busca por código normalizado", async () => {
@@ -71,7 +95,7 @@ describe("getCharactersByEpisode", () => {
 
     expect(client.getEpisodeByCode).toHaveBeenCalledWith("S02E04");
     expect(result.episode.name).toBe("Total Rickall");
-    expect(result.characters).toEqual(["Rick Sanchez"]);
+    expect(result.characters.map((c) => c.name)).toEqual(["Rick Sanchez"]);
   });
 
   it("retorna um único personagem como lista", async () => {
@@ -80,7 +104,7 @@ describe("getCharactersByEpisode", () => {
 
     const result = await getCharactersByEpisode("1");
 
-    expect(result.characters).toEqual(["Rick Sanchez"]);
+    expect(result.characters.map((c) => c.name)).toEqual(["Rick Sanchez"]);
   });
 
   it("não chama a rota de personagens quando não há personagens", async () => {

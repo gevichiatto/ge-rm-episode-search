@@ -32,11 +32,13 @@ export const characterSchema = z.object({
   gender: z.string(),
   origin: z.object({
     name: z.string(),
-    url: z.string().url(),
+    // A API devolve "" quando a origem/localização é desconhecida.
+    url: z.string(),
   }),
   location: z.object({
     name: z.string(),
-    url: z.string().url(),
+    // A API devolve "" quando a origem/localização é desconhecida.
+    url: z.string(),
   }),
   image: z.string().url(),
   episode: z.array(z.string()),
