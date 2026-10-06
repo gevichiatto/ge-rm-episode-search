@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 import {
   EpisodeNotFoundError,
   NetworkError,
+  RateLimitedError,
   TimeoutError,
   UpstreamError,
 } from "@/lib/rickandmorty/errors";
@@ -50,17 +51,30 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise
   }
 }
 
+// Traduz respostas não-2xx em erros tipados. O 404 só vira `notFound` quando o chamador o informa.
+function assertOk(response: Response, description: string, notFound?: () => Error): void {
+  if (response.status === 404 && notFound) {
+    throw notFound();
+  }
+
+  if (response.status === 429) {
+    throw new RateLimitedError(`Rate limited while fetching ${description}`);
+  }
+
+  if (!response.ok) {
+    throw new UpstreamError(response.status, `Failed to fetch ${description}`);
+  }
+}
+
 // Get episode by ID
 export async function getEpisodeById(id: number) {
   const response = await fetchWithTimeout(`${getEnv().RICK_AND_MORTY_API_BASE_URL}/episode/${id}`);
 
-  if (response.status === 404) {
-    throw new EpisodeNotFoundError(`Episode with id ${id} not found`);
-  }
-
-  if (!response.ok) {
-    throw new UpstreamError(response.status, `Failed to fetch episode with id ${id}`);
-  }
+  assertOk(
+    response,
+    `episode with id ${id}`,
+    () => new EpisodeNotFoundError(`Episode with id ${id} not found`),
+  );
 
   try {
     const data = await response.json();
@@ -76,13 +90,11 @@ export async function getEpisodeByCode(code: string) {
     `${getEnv().RICK_AND_MORTY_API_BASE_URL}/episode?episode=${encodeURIComponent(code)}`,
   );
 
-  if (response.status === 404) {
-    throw new EpisodeNotFoundError(`Episode with code ${code} not found`);
-  }
-
-  if (!response.ok) {
-    throw new UpstreamError(response.status, `Failed to fetch episode with code ${code}`);
-  }
+  assertOk(
+    response,
+    `episode with code ${code}`,
+    () => new EpisodeNotFoundError(`Episode with code ${code} not found`),
+  );
 
   try {
     const data = await response.json();
@@ -118,12 +130,7 @@ export async function getCharactersByIds(ids: number[]) {
     `${getEnv().RICK_AND_MORTY_API_BASE_URL}/character/${ids.join(",")}`,
   );
 
-  if (!response.ok) {
-    throw new UpstreamError(
-      response.status,
-      `Failed to fetch characters with ids ${ids.join(",")}`,
-    );
-  }
+  assertOk(response, `characters with ids ${ids.join(",")}`);
 
   try {
     const data = await response.json();

@@ -22,6 +22,7 @@ export const messages = {
     "episode-not-found": "Episódio não encontrado.",
     timeout: "A busca demorou demais. Tente novamente.",
     network: "Não foi possível acessar o serviço. Verifique sua conexão.",
+    "rate-limited": "Muitas requisições. Aguarde um pouco e tente de novo.",
     upstream: "O serviço está indisponível no momento. Tente novamente em instantes.",
   } satisfies Record<EpisodeSearchErrorCode, string>,
 };
@@ -31,4 +32,5 @@ export const RETRIABLE_CODES: readonly EpisodeSearchErrorCode[] = [
   "network",
   "timeout",
   "upstream",
+  "rate-limited",
 ];

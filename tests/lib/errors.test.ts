@@ -3,6 +3,7 @@ import {
   EpisodeNotFoundError,
   EpisodeSearchError,
   NetworkError,
+  RateLimitedError,
   TimeoutError,
   UpstreamError,
   ValidationError,
@@ -13,6 +14,7 @@ describe("EpisodeSearchError", () => {
     { Ctor: ValidationError, code: "validation", name: "ValidationError" },
     { Ctor: EpisodeNotFoundError, code: "episode-not-found", name: "EpisodeNotFoundError" },
     { Ctor: NetworkError, code: "network", name: "NetworkError" },
+    { Ctor: RateLimitedError, code: "rate-limited", name: "RateLimitedError" },
   ] as const;
 
   for (const { Ctor, code, name } of cases) {
@@ -28,7 +30,7 @@ describe("EpisodeSearchError", () => {
   }
 
   it("UpstreamError é uma instância de EpisodeSearchError", () => {
-    const error = new UpstreamError(429);
+    const error = new UpstreamError(500);
     expect(error).toBeInstanceOf(Error);
     expect(error).toBeInstanceOf(EpisodeSearchError);
     expect(error.name).toBe("UpstreamError");
@@ -60,7 +62,7 @@ describe("EpisodeNotFoundError", () => {
 
 describe("UpstreamError", () => {
   it("guarda o status HTTP quando informado", () => {
-    expect(new UpstreamError(429).status).toBe(429);
+    expect(new UpstreamError(502).status).toBe(502);
     expect(new UpstreamError(503).status).toBe(503);
   });
 
@@ -75,6 +77,12 @@ describe("UpstreamError", () => {
 
   it("aceita mensagem personalizada", () => {
     expect(new UpstreamError(400, "corpo fora do schema").message).toBe("corpo fora do schema");
+  });
+});
+
+describe("RateLimitedError", () => {
+  it("aceita mensagem personalizada", () => {
+    expect(new RateLimitedError("devagar").message).toBe("devagar");
   });
 });
 

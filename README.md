@@ -16,7 +16,8 @@ Nenhuma variável é obrigatória. Para sobrescrever os padrões, copie `.env.ex
 | Variável                        | Padrão                            | Descrição                                                                     |
 | ------------------------------- | --------------------------------- | ----------------------------------------------------------------------------- |
 | `RICK_AND_MORTY_API_BASE_URL`   | `https://rickandmortyapi.com/api` | URL base da API (só `https`; `http` apenas para `localhost` fora de produção) |
-| `RICK_AND_MORTY_API_TIMEOUT_MS` | `10000`                           | Timeout de cada requisição (ms)                                               |
+| `RICK_AND_MORTY_API_TIMEOUT_MS` | `10000`                           | HTTP 429 (limite de requisições)                                              | `RateLimitedError` | `rate-limited` | "Muitas requisições. Aguarde..." + retry |
+| Timeout de cada requisição (ms) |
 
 ### Scripts
 
@@ -74,14 +75,14 @@ tests/          lib/, config/ e components/ (Vitest)
 
 Cada falha vira uma classe tipada (`lib/rickandmorty/errors.ts`) com um `code`, e a UI mostra uma mensagem amigável — nunca status ou stack. Erros transitórios oferecem "Tentar novamente".
 
-| Situação                                     | Erro                   | `code`              | O usuário vê                                  |
-| -------------------------------------------- | ---------------------- | ------------------- | --------------------------------------------- |
-| Entrada vazia, inválida ou fora do intervalo | `ValidationError`      | `validation`        | Pede um número válido ou código `S01E01`      |
-| HTTP 404                                     | `EpisodeNotFoundError` | `episode-not-found` | "Episódio não encontrado."                    |
-| Timeout                                      | `TimeoutError`         | `timeout`           | "A busca demorou demais." + tentar novamente  |
-| Falha de rede                                | `NetworkError`         | `network`           | "Não foi possível acessar o serviço." + retry |
-| HTTP não-2xx, JSON inválido ou falha no Zod  | `UpstreamError`        | `upstream`          | "O serviço está indisponível." + retry        |
-| Qualquer outra coisa                         | —                      | —                   | `app/error.tsx`                               |
+| Situação                                                     | Erro                   | `code`              | O usuário vê                                  |
+| ------------------------------------------------------------ | ---------------------- | ------------------- | --------------------------------------------- |
+| Entrada vazia, inválida ou fora do intervalo                 | `ValidationError`      | `validation`        | Pede um número válido ou código `S01E01`      |
+| HTTP 404                                                     | `EpisodeNotFoundError` | `episode-not-found` | "Episódio não encontrado."                    |
+| Timeout                                                      | `TimeoutError`         | `timeout`           | "A busca demorou demais." + tentar novamente  |
+| Falha de rede                                                | `NetworkError`         | `network`           | "Não foi possível acessar o serviço." + retry |
+| HTTP não-2xx (exceto 404/429), JSON inválido ou falha no Zod | `UpstreamError`        | `upstream`          | "O serviço está indisponível." + retry        |
+| Qualquer outra coisa                                         | —                      | —                   | `app/error.tsx`                               |
 
 ## Testes e CI
 

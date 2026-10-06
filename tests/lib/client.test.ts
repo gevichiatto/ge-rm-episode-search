@@ -3,6 +3,7 @@ import { getCharactersByIds, getEpisodeByCode, getEpisodeById } from "@/lib/rick
 import {
   EpisodeNotFoundError,
   NetworkError,
+  RateLimitedError,
   TimeoutError,
   UpstreamError,
 } from "@/lib/rickandmorty/errors";
@@ -79,6 +80,12 @@ describe("getEpisodeById", () => {
     });
   });
 
+  it("lança RateLimitedError em 429", async () => {
+    fetchMock.mockResolvedValue(json({}, 429));
+
+    await expect(getEpisodeById(15)).rejects.toBeInstanceOf(RateLimitedError);
+  });
+
   it("não mascara payload inválido como status 500", async () => {
     fetchMock.mockResolvedValue(json({ ...episode, id: "15" }));
 
@@ -140,6 +147,12 @@ describe("getEpisodeByCode", () => {
     await expect(getEpisodeByCode("S09E99")).rejects.toBeInstanceOf(EpisodeNotFoundError);
   });
 
+  it("lança RateLimitedError em 429", async () => {
+    fetchMock.mockResolvedValue(json({}, 429));
+
+    await expect(getEpisodeByCode("S02E04")).rejects.toBeInstanceOf(RateLimitedError);
+  });
+
   it("lança UpstreamError em 500", async () => {
     fetchMock.mockResolvedValue(json({}, 500));
 
@@ -182,6 +195,21 @@ describe("getCharactersByIds", () => {
   it.each([[[0]], [[-1]], [[1.5]], [[Number.NaN]]])("recusa ids inválidos %j", async (ids) => {
     await expect(getCharactersByIds(ids)).rejects.toBeInstanceOf(RangeError);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("lança RateLimitedError em 429", async () => {
+    fetchMock.mockResolvedValue(json({}, 429));
+
+    await expect(getCharactersByIds([1, 2])).rejects.toBeInstanceOf(RateLimitedError);
+  });
+
+  it("não trata 404 de personagens como episódio inexistente", async () => {
+    fetchMock.mockResolvedValue(json({}, 404));
+
+    await expect(getCharactersByIds([1])).rejects.toMatchObject({
+      constructor: UpstreamError,
+      status: 404,
+    });
   });
 
   it("lança UpstreamError em 5xx", async () => {
