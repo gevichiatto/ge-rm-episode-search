@@ -29,9 +29,9 @@ function makeEpisode(characterIds: number[]): Episode {
   };
 }
 
-function makeCharacters(names: string[]): Characters {
+function makeCharacters(names: string[], ids?: number[]): Characters {
   return names.map((name, index) => ({
-    id: index + 1,
+    id: ids?.[index] ?? index + 1,
     name,
     status: "Alive",
     species: "Human",
@@ -85,6 +85,20 @@ describe("getCharactersByEpisode", () => {
       "Beth Smith",
       "Jerry Smith (Earth (C-137))",
       "Jerry Smith (Earth (Replacement Dimension))",
+    ]);
+  });
+
+  it("desempata nomes equivalentes pelo id, não pela ordem da API", async () => {
+    vi.mocked(client.getEpisodeById).mockResolvedValue(makeEpisode([9, 3]));
+    vi.mocked(client.getCharactersByIds).mockResolvedValue(
+      makeCharacters(["Rick", "Rick"], [9, 3]),
+    );
+
+    const result = await getCharactersByEpisode("15");
+
+    expect(result.characters.map(({ id, name }) => ({ id, name }))).toEqual([
+      { id: 3, name: "Rick (Earth) #1" },
+      { id: 9, name: "Rick (Earth) #2" },
     ]);
   });
 

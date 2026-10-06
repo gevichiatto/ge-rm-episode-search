@@ -67,9 +67,10 @@ export function disambiguateNames(
 const nameCollator = new Intl.Collator("pt-BR", { sensitivity: "base" });
 
 /**
- * Ordena itens que possuem `name` em ordem alfabética (collator `pt-BR`, sem diferenciar
- * caixa ou acentos), sem mutar a entrada.
+ * Ordena itens que possuem `name` e `id` em ordem alfabética (collator `pt-BR`, sem
+ * diferenciar caixa ou acentos), sem mutar a entrada. Nomes equivalentes são desempatados
+ * pelo `id` crescente, então a ordem não depende da ordem em que a API devolveu os itens.
  */
-export function sortByName<T extends { name: string }>(items: readonly T[]): T[] {
-  return [...items].sort((a, b) => nameCollator.compare(a.name, b.name));
+export function sortByName<T extends { id: number; name: string }>(items: readonly T[]): T[] {
+  return [...items].sort((a, b) => nameCollator.compare(a.name, b.name) || a.id - b.id);
 }

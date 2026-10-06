@@ -13,8 +13,8 @@ export function CharacterList({ characters }: CharacterListProps) {
   }
   return (
     <ol className="flex flex-col gap-3">
-      {characters.map(({ name, image }, index) => (
-        <li key={`${index}-${name}`} className="flex items-center gap-3">
+      {characters.map(({ id, name, image }) => (
+        <li key={id} className="flex items-center gap-3">
           <Image
             src={image}
             alt=""

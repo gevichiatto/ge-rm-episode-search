@@ -17,8 +17,8 @@ describe("CharacterList", () => {
     render(
       <CharacterList
         characters={[
-          { name: "Beth Smith", image: `${API}/4.jpeg` },
-          { name: "Morty Smith", image: `${API}/2.jpeg` },
+          { id: 4, name: "Beth Smith", image: `${API}/4.jpeg` },
+          { id: 2, name: "Morty Smith", image: `${API}/2.jpeg` },
         ]}
       />,
     );
@@ -34,8 +34,8 @@ describe("CharacterList", () => {
     render(
       <CharacterList
         characters={[
-          { name: "Rick", image: `${API}/1.jpeg` },
-          { name: "Rick", image: `${API}/1.jpeg` },
+          { id: 1, name: "Rick", image: `${API}/1.jpeg` },
+          { id: 2, name: "Rick", image: `${API}/1.jpeg` },
         ]}
       />,
     );

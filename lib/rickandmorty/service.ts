@@ -4,6 +4,7 @@ import type { Episode } from "@/lib/rickandmorty/schemas";
 import { disambiguateNames, extractCharacterIds, sortByName } from "@/lib/utils/character";
 
 export interface CharacterSummary {
+  id: number;
   name: string;
   image: string;
 }
@@ -39,6 +40,7 @@ export async function getCharactersByEpisode(input: string): Promise<EpisodeChar
   const characters = await getCharactersByIds(ids);
   const names = disambiguateNames(characters);
   const summaries = characters.map((character, index) => ({
+    id: character.id,
     name: names[index] ?? character.name,
     image: character.image,
   }));
