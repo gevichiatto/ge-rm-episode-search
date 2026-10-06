@@ -8,13 +8,9 @@ export function extractCharacterIds(urls: string[]): number[] {
   const ids = new Set<number>();
 
   for (const url of urls) {
-    // Extrai o ID da URL usando regex
-    const match = url.match(/\/(\d+)$/);
-    if (match && match[1]) {
-      const id = parseInt(match[1], 10);
-      if (!isNaN(id)) {
-        ids.add(id);
-      }
+    const digits = /\/(\d+)$/.exec(url)?.[1];
+    if (digits) {
+      ids.add(Number(digits));
     }
   }
 
@@ -44,22 +40,21 @@ export function disambiguateNames(
     (nameCounts.get(name) ?? 0) > 1 ? `${name} (${origin.name})` : name,
   );
 
-  const labelCounts = new Map<string, number>();
-  for (const label of labels) {
-    labelCounts.set(label, (labelCounts.get(label) ?? 0) + 1);
-  }
-
-  return labels.map((label, index) => {
-    if ((labelCounts.get(label) ?? 0) < 2) return label;
-    const self = characters[index];
-    const rank =
-      characters.filter(
-        (other, i) =>
-          labels[i] === label &&
-          (other.id < (self?.id ?? 0) || (other.id === self?.id && i < index)),
-      ).length + 1;
-    return `${label} #${rank}`;
+  const indexesByLabel = new Map<string, number[]>();
+  labels.forEach((label, index) => {
+    indexesByLabel.set(label, [...(indexesByLabel.get(label) ?? []), index]);
   });
+
+  const result = [...labels];
+  for (const [label, indexes] of indexesByLabel) {
+    if (indexes.length < 2) continue;
+    // Numera por id crescente (empate: ordem de entrada) para o resultado ser estável.
+    const ranked = [...indexes].sort((a, b) => (characters[a]?.id ?? 0) - (characters[b]?.id ?? 0));
+    ranked.forEach((index, rank) => {
+      result[index] = `${label} #${rank + 1}`;
+    });
+  }
+  return result;
 }
 
 // Locale fixo (o mesmo da UI): `localeCompare` sem locale usa o do runtime e a ordem variaria
