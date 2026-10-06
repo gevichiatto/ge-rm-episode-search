@@ -16,8 +16,7 @@ Nenhuma variável é obrigatória. Para sobrescrever os padrões, copie `.env.ex
 | Variável                        | Padrão                            | Descrição                                                                     |
 | ------------------------------- | --------------------------------- | ----------------------------------------------------------------------------- |
 | `RICK_AND_MORTY_API_BASE_URL`   | `https://rickandmortyapi.com/api` | URL base da API (só `https`; `http` apenas para `localhost` fora de produção) |
-| `RICK_AND_MORTY_API_TIMEOUT_MS` | `10000`                           | HTTP 429 (limite de requisições)                                              | `RateLimitedError` | `rate-limited` | "Muitas requisições. Aguarde..." + retry |
-| Timeout de cada requisição (ms) |
+| `RICK_AND_MORTY_API_TIMEOUT_MS` | `10000`                           | Timeout de cada requisição (ms)                                               |
 
 ### Scripts
 
@@ -64,10 +63,11 @@ tests/          lib/, config/ e components/ (Vitest)
 - **Só Next.js, sem backend próprio.** Server Components chamam a API pública diretamente; não há API route.
 - **Client defensivo.** O código do episódio é codificado na URL, ids inválidos ou vazios são recusados dentro do próprio client e o ambiente só é lido no primeiro uso. Payload inválido vira `UpstreamError` sem status, e o log traz só um resumo do erro.
 - **Cabeçalhos de segurança.** `proxy.ts` gera uma CSP com nonce por requisição (`lib/security/csp.ts`; `unsafe-eval` só em dev), e `next.config.ts` define `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` e HSTS. Sem `upgrade-insecure-requests`, para não quebrar `next start` em `http://localhost`.
+- **Sem limite fixo de episódios.** A entrada aceita qualquer inteiro positivo seguro; se o episódio não existir, a API responde 404 e a UI mostra "Episódio não encontrado", sem código preso ao tamanho atual da série.
 - **Zod na borda.** Respostas da API, parâmetros da URL e variáveis de ambiente são validados; os tipos vêm de `z.infer`.
 - **A API devolve formatos diferentes** para `/character/{ids}`: objeto para um id, array para vários. O schema normaliza para array. Com zero personagens, `/character/` não é chamado (retornaria a lista inteira).
 - **Ordem alfabética com `Intl.Collator("pt-BR", { sensitivity: "base" })`**, não `.sort()` puro (que ordenaria por code point) nem `localeCompare` sem locale (que varia conforme o runtime). Ignora caixa e acentos.
-- **Nomes duplicados** (ex.: o episódio 6 tem vários "Jerry Smith") recebem a origem entre parênteses: `Jerry Smith (Earth (C-137))`. Se nome e origem também coincidirem, acrescenta ` #1`, ` #2`… pela ordem do id. Nomes únicos ficam intactos.
+- **Nomes duplicados** (ex.: o episódio 6 tem vários "Jerry Smith") recebem a origem entre parênteses: `Jerry Smith (Earth (C-137))`. Se nome e origem também coincidirem, acrescenta ` #1`, ` #2`… pela ordem do id. Nomes únicos ficam intactos. A lista final desempata nomes equivalentes (mesmo ignorando caixa e acentos) pelo `id`, então a ordem não depende da resposta da API.
 - **Imagens via `next/image`**, restritas por `images.remotePatterns` aos avatares da API.
 - **Sem cache próprio.** Fica como evolução (ver abaixo), para evitar resultados desatualizados.
 
@@ -77,8 +77,9 @@ Cada falha vira uma classe tipada (`lib/rickandmorty/errors.ts`) com um `code`, 
 
 | Situação                                                     | Erro                   | `code`              | O usuário vê                                  |
 | ------------------------------------------------------------ | ---------------------- | ------------------- | --------------------------------------------- |
-| Entrada vazia, inválida ou fora do intervalo                 | `ValidationError`      | `validation`        | Pede um número válido ou código `S01E01`      |
+| Entrada vazia ou fora dos formatos aceitos                   | `ValidationError`      | `validation`        | Pede um número válido ou código `S01E01`      |
 | HTTP 404                                                     | `EpisodeNotFoundError` | `episode-not-found` | "Episódio não encontrado."                    |
+| HTTP 429 (limite de requisições)                             | `RateLimitedError`     | `rate-limited`      | "Muitas requisições. Aguarde..." + retry      |
 | Timeout                                                      | `TimeoutError`         | `timeout`           | "A busca demorou demais." + tentar novamente  |
 | Falha de rede                                                | `NetworkError`         | `network`           | "Não foi possível acessar o serviço." + retry |
 | HTTP não-2xx (exceto 404/429), JSON inválido ou falha no Zod | `UpstreamError`        | `upstream`          | "O serviço está indisponível." + retry        |
@@ -99,5 +100,6 @@ A CI (`.github/workflows/ci.yml`) roda em PRs e em `master`: `pnpm typegen`, `pn
 ## Limitações e próximos passos
 
 - Sem cache de resultados; se necessário, `revalidateTag` por episódio.
+- Sem tratamento de `Retry-After` no 429: a UI só sugere tentar de novo mais tarde.
 - Sem paginação: a API aceita um lote de ids, e uma chamada basta para este escopo.
 - Apenas pt-BR.
