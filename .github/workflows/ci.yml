@@ -24,6 +24,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typegen
-      # validate = lint + typecheck + test + format:check
+      # validate = lint + typecheck + testes com cobertura + format:check
       - run: pnpm validate
       - run: pnpm build
