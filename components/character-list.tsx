@@ -12,15 +12,15 @@ export function CharacterList({ characters }: CharacterListProps) {
     return <p>{messages.emptyEpisode}</p>;
   }
   return (
-    <ol className="flex flex-col gap-2">
+    <ol className="flex flex-col gap-3">
       {characters.map(({ name, image }, index) => (
         <li key={`${index}-${name}`} className="flex items-center gap-3">
           <Image
             src={image}
             alt=""
-            width={48}
-            height={48}
-            className="size-12 rounded-full bg-zinc-200 object-cover dark:bg-zinc-800"
+            width={64}
+            height={64}
+            className="size-16 rounded-full bg-zinc-200 object-cover ring-2 ring-accent dark:bg-zinc-800"
           />
           <span>{name}</span>
         </li>

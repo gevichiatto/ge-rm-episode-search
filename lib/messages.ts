@@ -2,11 +2,11 @@ import type { EpisodeSearchErrorCode } from "@/lib/rickandmorty/errors";
 
 /** Todo texto visível ao usuário (pt-BR) fica aqui. */
 export const messages = {
-  title: "Personagens por episódio",
-  subtitle: "Busque pelo número do episódio ou pelo código (ex.: S01E01).",
+  title: "Portal de Personagens",
+  subtitle: "Escolha um episódio de Rick and Morty e veja quem apareceu nele, em ordem alfabética.",
   searchLabel: "Episódio",
-  searchPlaceholder: "número ou S01E01",
-  searchButton: "Buscar",
+  searchPlaceholder: "Ex.: 1 ou S01E01",
+  searchButton: "Abrir portal",
   retry: "Tentar novamente",
   emptyEpisode: "Este episódio não tem personagens cadastrados.",
   resultsCount: (count: number): string => (count === 1 ? "1 personagem" : `${count} personagens`),
@@ -16,7 +16,7 @@ export const messages = {
   notFoundBack: "Voltar para a busca",
   metadataTitle: "Personagens por episódio | Rick and Morty",
   metadataDescription:
-    "Digite o número ou o código de um episódio de Rick and Morty e veja os personagens em ordem alfabética.",
+    "Abra um portal para qualquer episódio de Rick and Morty e veja os personagens em ordem alfabética.",
   errors: {
     validation: "Informe um número de episódio válido (ex.: 15) ou um código como S01E01.",
     "episode-not-found": "Episódio não encontrado.",
