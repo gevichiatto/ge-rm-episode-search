@@ -13,10 +13,10 @@ pnpm dev        # http://localhost:3000
 
 Nenhuma variável é obrigatória. Para sobrescrever os padrões, copie `.env.example` para `.env.local`:
 
-| Variável                        | Padrão                            | Descrição                       |
-| ------------------------------- | --------------------------------- | ------------------------------- |
-| `RICK_AND_MORTY_API_BASE_URL`   | `https://rickandmortyapi.com/api` | URL base da API                 |
-| `RICK_AND_MORTY_API_TIMEOUT_MS` | `10000`                           | Timeout de cada requisição (ms) |
+| Variável                        | Padrão                            | Descrição                                                                     |
+| ------------------------------- | --------------------------------- | ----------------------------------------------------------------------------- |
+| `RICK_AND_MORTY_API_BASE_URL`   | `https://rickandmortyapi.com/api` | URL base da API (só `https`; `http` apenas para `localhost` fora de produção) |
+| `RICK_AND_MORTY_API_TIMEOUT_MS` | `10000`                           | Timeout de cada requisição (ms)                                               |
 
 ### Scripts
 
@@ -59,6 +59,7 @@ tests/lib/      testes unitários (Vitest)
 
 - **"Número do episódio" aceita os dois formatos.** O enunciado é ambíguo, então a busca aceita o **id da API** (`1`–`51`) e o **código** (`S01E01`, sem diferenciar maiúsculas). O custo é baixo: a API já expõe `/episode?episode=` para o código.
 - **Só Next.js, sem backend próprio.** Server Components chamam a API pública diretamente; não há API route.
+- **Client defensivo.** O código do episódio é codificado na URL, ids inválidos ou vazios são recusados dentro do próprio client e o ambiente só é lido no primeiro uso. Payload inválido vira `UpstreamError` sem status, e o log traz só um resumo do erro.
 - **Zod na borda.** Respostas da API, parâmetros da URL e variáveis de ambiente são validados; os tipos vêm de `z.infer`.
 - **A API devolve formatos diferentes** para `/character/{ids}`: objeto para um id, array para vários. O schema normaliza para array. Com zero personagens, `/character/` não é chamado (retornaria a lista inteira).
 - **Ordem alfabética com `localeCompare`**, não `.sort()` puro, que ordenaria por code point.
