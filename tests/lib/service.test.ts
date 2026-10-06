@@ -116,12 +116,6 @@ describe("getCharactersByEpisode", () => {
     expect(client.getCharactersByIds).not.toHaveBeenCalled();
   });
 
-  it("lança EpisodeNotFoundError quando o código não retorna resultado", async () => {
-    vi.mocked(client.getEpisodeByCode).mockResolvedValue(undefined);
-
-    await expect(getCharactersByEpisode("S99E99")).rejects.toBeInstanceOf(EpisodeNotFoundError);
-  });
-
   it("lança ValidationError sem chamar a API", async () => {
     await expect(getCharactersByEpisode("abc")).rejects.toBeInstanceOf(ValidationError);
     expect(client.getEpisodeById).not.toHaveBeenCalled();

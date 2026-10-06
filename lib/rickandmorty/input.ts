@@ -5,7 +5,7 @@ import { ValidationError } from "../rickandmorty/errors";
  * Schema Zod para validar a entrada do usuário.
  *
  * Aceita:
- * - dígitos válidos (sem `0`, sem sinal)
+ * - dígitos válidos (sem `0`, sem sinal); zeros à esquerda são normalizados (`0051` → 51)
  * - `S\d{2}E\d{2}` (case-insensitive, normaliza para `S02E04`)
  *
  * Rejeita:
