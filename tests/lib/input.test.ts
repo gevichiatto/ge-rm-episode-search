@@ -24,4 +24,15 @@ describe("parseEpisodeInput", () => {
   it("lança ValidationError para entrada inválida", () => {
     expect(() => parseEpisodeInput("abc")).toThrow(ValidationError);
   });
+
+  it("normaliza zeros à esquerda para o id (comportamento atual)", () => {
+    expect((parseEpisodeInput("0051") as { id: number }).id).toBe(51);
+  });
+
+  it.each(["52", "0", "99999999999999999999", "1 5", "S1E1", "S01E1", " 15"])(
+    "lança ValidationError para %j",
+    (value) => {
+      expect(() => parseEpisodeInput(value)).toThrow(ValidationError);
+    },
+  );
 });
