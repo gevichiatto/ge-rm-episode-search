@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rick and Morty — Personagens por episódio
 
-## Getting Started
+Uma página única em Next.js: digite o número de um episódio (ou o código `S01E01`) e veja os personagens daquele episódio em ordem alfabética, com a foto de cada um. Os dados vêm da [Rick and Morty API](https://rickandmortyapi.com/documentation).
 
-First, run the development server:
+## Como rodar
+
+Requisitos: Node `24` (veja `.nvmrc`) e [pnpm](https://pnpm.io).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+pnpm dev        # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Nenhuma variável é obrigatória. Para sobrescrever os padrões, copie `.env.example` para `.env.local`:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variável                        | Padrão                            | Descrição                       |
+| ------------------------------- | --------------------------------- | ------------------------------- |
+| `RICK_AND_MORTY_API_BASE_URL`   | `https://rickandmortyapi.com/api` | URL base da API                 |
+| `RICK_AND_MORTY_API_TIMEOUT_MS` | `10000`                           | Timeout de cada requisição (ms) |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Scripts
 
-## Learn More
+| Script           | O que faz                                  |
+| ---------------- | ------------------------------------------ |
+| `pnpm dev`       | Servidor de desenvolvimento                |
+| `pnpm build`     | Build de produção                          |
+| `pnpm start`     | Serve o build de produção                  |
+| `pnpm lint`      | ESLint                                     |
+| `pnpm typecheck` | `tsc --noEmit`                             |
+| `pnpm format`    | Prettier (`format:check` apenas verifica)  |
+| `pnpm test`      | Vitest (`test:watch` para modo interativo) |
+| `pnpm validate`  | lint + typecheck + testes + format:check   |
 
-To learn more about Next.js, take a look at the following resources:
+## Como funciona
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+app/page.tsx  →  lib/rickandmorty/service.ts  →  lib/rickandmorty/client.ts  →  rickandmortyapi.com
+ (UI, Server        (regras: valida a entrada,       (fetch, timeout, mapeamento
+  Component)         ordena, desambigua nomes)        de status, validação Zod)
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. A `page` lê `?q=` (`searchParams` é uma Promise no Next 16) e chama o service. A busca fica na URL, então é compartilhável e funciona sem JavaScript no cliente (o formulário é um `GET`).
+2. O service valida a entrada **antes** de qualquer chamada de rede, busca o episódio e então **todos** os personagens em **uma única** requisição (`/character/1,2,3`), em vez de uma por personagem.
+3. O client traduz falhas em erros tipados e valida toda resposta com Zod. Dado externo é `unknown` até passar pelo schema.
+4. A UI recebe ou o resultado, ou um `EpisodeSearchError`, e mostra a mensagem correspondente.
 
-## Deploy on Vercel
+```
+app/            páginas e fallbacks (page, layout, loading, error, not-found)
+components/     SearchForm, CharacterList, ErrorMessage
+config/         env.ts — variáveis de ambiente validadas com Zod
+lib/
+  messages.ts   todo texto visível ao usuário (pt-BR)
+  rickandmorty/ client, service, schemas, errors, input
+  utils/        ordenação e desambiguação de nomes
+tests/lib/      testes unitários (Vitest)
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Decisões
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **"Número do episódio" aceita os dois formatos.** O enunciado é ambíguo, então a busca aceita o **id da API** (`1`–`51`) e o **código** (`S01E01`, sem diferenciar maiúsculas). O custo é baixo: a API já expõe `/episode?episode=` para o código.
+- **Só Next.js, sem backend próprio.** Server Components chamam a API pública diretamente; não há API route.
+- **Zod na borda.** Respostas da API, parâmetros da URL e variáveis de ambiente são validados; os tipos vêm de `z.infer`.
+- **A API devolve formatos diferentes** para `/character/{ids}`: objeto para um id, array para vários. O schema normaliza para array. Com zero personagens, `/character/` não é chamado (retornaria a lista inteira).
+- **Ordem alfabética com `localeCompare`**, não `.sort()` puro, que ordenaria por code point.
+- **Nomes duplicados** (ex.: o episódio 6 tem vários "Jerry Smith") recebem a origem entre parênteses: `Jerry Smith (Earth (C-137))`. Nomes únicos ficam intactos.
+- **Imagens via `next/image`**, restritas por `images.remotePatterns` aos avatares da API.
+- **Sem cache próprio.** Fica como evolução (ver abaixo), para evitar resultados desatualizados.
+
+## Tratamento de erros
+
+Cada falha vira uma classe tipada (`lib/rickandmorty/errors.ts`) com um `code`, e a UI mostra uma mensagem amigável — nunca status ou stack. Erros transitórios oferecem "Tentar novamente".
+
+| Situação                                     | Erro                   | `code`              | O usuário vê                                  |
+| -------------------------------------------- | ---------------------- | ------------------- | --------------------------------------------- |
+| Entrada vazia, inválida ou fora do intervalo | `ValidationError`      | `validation`        | Pede um número válido ou código `S01E01`      |
+| HTTP 404                                     | `EpisodeNotFoundError` | `episode-not-found` | "Episódio não encontrado."                    |
+| Timeout                                      | `TimeoutError`         | `timeout`           | "A busca demorou demais." + tentar novamente  |
+| Falha de rede                                | `NetworkError`         | `network`           | "Não foi possível acessar o serviço." + retry |
+| HTTP não-2xx, JSON inválido ou falha no Zod  | `UpstreamError`        | `upstream`          | "O serviço está indisponível." + retry        |
+| Qualquer outra coisa                         | —                      | —                   | `app/error.tsx`                               |
+
+## Testes e CI
+
+```bash
+pnpm test        # Vitest
+pnpm validate    # lint + typecheck + testes + format
+```
+
+Os testes cobrem validação de entrada, hierarquia de erros, o service (um personagem vs. vários, zero personagens, 404, 5xx, timeout, payload inválido, desambiguação, imagens) e os utilitários de ordenação. Não há testes de componente nem E2E.
+
+A CI (`.github/workflows/ci.yml`) roda em PRs e em `master`: `pnpm typegen`, `pnpm validate`, `pnpm test` e `pnpm build`. Hooks do Husky + commitlint impõem commits no formato Conventional Commits.
+
+## Limitações e próximos passos
+
+- Sem testes de componente ou E2E (Playwright).
+- Sem cache de resultados; se necessário, `revalidateTag` por episódio.
+- Sem paginação: a API aceita um lote de ids, e uma chamada basta para este escopo.
+- Apenas pt-BR.
