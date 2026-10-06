@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { disambiguateNames, extractCharacterIds, sortByName } from "@/lib/utils/character";
 
 describe("extractCharacterIds", () => {
@@ -97,6 +97,23 @@ describe("sortByName", () => {
   it("ordena nomes com acentos corretamente", () => {
     const names = ["Zé", "Álvaro", "Carlos", "Beto"].map((name) => ({ name }));
     expect(sortByName(names).map((i) => i.name)).toEqual(["Álvaro", "Beto", "Carlos", "Zé"]);
+  });
+
+  it("ignora caixa e acentos e não depende do locale do processo", () => {
+    const names = ["zélia", "Zeca", "ágata", "Abel", "álvaro"].map((name) => ({ name }));
+    const spy = vi.spyOn(String.prototype, "localeCompare").mockReturnValue(1);
+    try {
+      expect(sortByName(names).map((i) => i.name)).toEqual([
+        "Abel",
+        "ágata",
+        "álvaro",
+        "Zeca",
+        "zélia",
+      ]);
+      expect(spy).not.toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it("ordena por nome e não modifica a entrada", () => {

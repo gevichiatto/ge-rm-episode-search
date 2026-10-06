@@ -66,7 +66,7 @@ tests/          lib/, config/ e components/ (Vitest)
 - **Cabeçalhos de segurança.** `proxy.ts` gera uma CSP com nonce por requisição (`lib/security/csp.ts`; `unsafe-eval` só em dev), e `next.config.ts` define `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` e HSTS. Sem `upgrade-insecure-requests`, para não quebrar `next start` em `http://localhost`.
 - **Zod na borda.** Respostas da API, parâmetros da URL e variáveis de ambiente são validados; os tipos vêm de `z.infer`.
 - **A API devolve formatos diferentes** para `/character/{ids}`: objeto para um id, array para vários. O schema normaliza para array. Com zero personagens, `/character/` não é chamado (retornaria a lista inteira).
-- **Ordem alfabética com `localeCompare`**, não `.sort()` puro, que ordenaria por code point.
+- **Ordem alfabética com `Intl.Collator("pt-BR", { sensitivity: "base" })`**, não `.sort()` puro (que ordenaria por code point) nem `localeCompare` sem locale (que varia conforme o runtime). Ignora caixa e acentos.
 - **Nomes duplicados** (ex.: o episódio 6 tem vários "Jerry Smith") recebem a origem entre parênteses: `Jerry Smith (Earth (C-137))`. Se nome e origem também coincidirem, acrescenta ` #1`, ` #2`… pela ordem do id. Nomes únicos ficam intactos.
 - **Imagens via `next/image`**, restritas por `images.remotePatterns` aos avatares da API.
 - **Sem cache próprio.** Fica como evolução (ver abaixo), para evitar resultados desatualizados.

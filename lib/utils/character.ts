@@ -62,9 +62,14 @@ export function disambiguateNames(
   });
 }
 
+// Locale fixo (o mesmo da UI): `localeCompare` sem locale usa o do runtime e a ordem variaria
+// entre ambientes. `sensitivity: "base"` ignora caixa e acentos na comparação.
+const nameCollator = new Intl.Collator("pt-BR", { sensitivity: "base" });
+
 /**
- * Ordena itens que possuem `name` em ordem alfabética, sem mutar a entrada.
+ * Ordena itens que possuem `name` em ordem alfabética (collator `pt-BR`, sem diferenciar
+ * caixa ou acentos), sem mutar a entrada.
  */
 export function sortByName<T extends { name: string }>(items: readonly T[]): T[] {
-  return [...items].sort((a, b) => a.name.localeCompare(b.name));
+  return [...items].sort((a, b) => nameCollator.compare(a.name, b.name));
 }
