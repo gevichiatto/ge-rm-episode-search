@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ValidationError } from "../rickandmorty/errors";
 
 /**
  * Schema Zod para validar a entrada do usuário.
@@ -55,7 +56,7 @@ export function parseEpisodeInput(input: string): EpisodeInput {
   const result = episodeInputSchema.safeParse(input);
 
   if (!result.success) {
-    throw new ValidationError(result.error.issues[0].message);
+    throw new ValidationError(result.error?.issues?.[0]?.message ?? "Entrada inválida.");
   }
 
   return result.data;
