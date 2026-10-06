@@ -30,6 +30,7 @@ Nenhuma variável é obrigatória. Para sobrescrever os padrões, copie `.env.ex
 | `pnpm format`        | Prettier (`format:check` apenas verifica)   |
 | `pnpm test`          | Vitest (`test:watch` para modo interativo)  |
 | `pnpm test:coverage` | Vitest com relatório de cobertura           |
+| `pnpm test:e2e`      | Playwright (fora do `validate`)             |
 | `pnpm validate`      | lint + typecheck + cobertura + format:check |
 
 ## Como funciona
@@ -86,16 +87,16 @@ Cada falha vira uma classe tipada (`lib/rickandmorty/errors.ts`) com um `code`, 
 
 ```bash
 pnpm test        # Vitest
+pnpm test:e2e    # Playwright (sobe um mock da API e um next dev na porta 3100)
 pnpm validate    # lint + typecheck + testes + format
 ```
 
-Os testes (`pnpm test:coverage` gera o relatório em `coverage/` e falha abaixo dos pisos definidos em `vitest.config.mjs`) cobrem validação de entrada, hierarquia de erros, o service (um personagem vs. vários, zero personagens, 404, 5xx, timeout, payload inválido, desambiguação, imagens) os utilitários de ordenação, a CSP e os componentes (Testing Library + jsdom, em `tests/components/`). Não há E2E.
+Os testes (`pnpm test:coverage` gera o relatório em `coverage/` e falha abaixo dos pisos definidos em `vitest.config.mjs`) cobrem validação de entrada, hierarquia de erros, o service (um personagem vs. vários, zero personagens, 404, 5xx, timeout, payload inválido, desambiguação, imagens), os utilitários de ordenação, a CSP e os componentes (Testing Library + jsdom, em `tests/components/`). O E2E (`tests/e2e/`) sobe um servidor de mock da API e um `next dev` próprio (porta 3100, `distDir` separado). O mock é necessário porque as chamadas à API saem do servidor Next, que o `page.route` não intercepta, e o `next dev` porque em produção o client recusa `http://`. Na primeira vez, rode `pnpm exec playwright install chromium`.
 
-A CI (`.github/workflows/ci.yml`) roda em PRs e em `master`: `pnpm typegen`, `pnpm validate` (que roda os testes com cobertura e aplica os pisos, então eles rodam uma única vez) e `pnpm build`. O workflow tem permissão só de leitura, cancela execuções antigas do mesmo PR e fixa as actions por SHA; o Dependabot (`.github/dependabot.yml`) atualiza dependências npm toda semana e actions todo mês. Hooks do Husky + commitlint impõem commits no formato Conventional Commits.
+A CI (`.github/workflows/ci.yml`) roda em PRs e em `master`: `pnpm typegen`, `pnpm validate` (que roda os testes com cobertura e aplica os pisos, então eles rodam uma única vez) e `pnpm build`; um job separado (`e2e`) roda o Playwright, com cache dos navegadores, fora do `validate`. O workflow tem permissão só de leitura, cancela execuções antigas do mesmo PR e fixa as actions por SHA; o Dependabot (`.github/dependabot.yml`) atualiza dependências npm toda semana e actions todo mês. Hooks do Husky + commitlint impõem commits no formato Conventional Commits.
 
 ## Limitações e próximos passos
 
-- Sem E2E (Playwright).
 - Sem cache de resultados; se necessário, `revalidateTag` por episódio.
 - Sem paginação: a API aceita um lote de ids, e uma chamada basta para este escopo.
 - Apenas pt-BR.
