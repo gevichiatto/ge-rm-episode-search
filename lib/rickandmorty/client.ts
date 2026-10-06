@@ -12,6 +12,7 @@ import {
   paginatedEpisodeSchema,
   normalizedCharacterSchema,
 } from "@/lib/rickandmorty/schemas";
+import type { Character, Episode } from "@/lib/rickandmorty/schemas";
 
 // Resumo seguro para log: nunca despeja o payload nem o erro completo do Zod.
 function describeParseError(error: unknown): string {
@@ -25,10 +26,10 @@ function describeParseError(error: unknown): string {
 
 function invalidPayload(context: string, error: unknown): UpstreamError {
   console.error(`Resposta inválida da API (${context}): ${describeParseError(error)}`);
-  return new UpstreamError(undefined, "Invalid response from upstream API");
+  return new UpstreamError(undefined, "Resposta inválida da API upstream");
 }
 
-// Helper function to make API requests with timeout
+// Faz a requisição com timeout, traduzindo abort e falhas de transporte em erros tipados.
 async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
   const env = getEnv();
   const controller = new AbortController();
@@ -45,9 +46,12 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise
   } catch (error) {
     clearTimeout(timeoutId);
     if (error instanceof Error && error.name === "AbortError") {
-      throw new TimeoutError(env.RICK_AND_MORTY_API_TIMEOUT_MS, "Request timed out");
+      throw new TimeoutError(
+        env.RICK_AND_MORTY_API_TIMEOUT_MS,
+        "A requisição excedeu o tempo limite",
+      );
     }
-    throw new NetworkError("Network error occurred");
+    throw new NetworkError("Ocorreu um erro de rede");
   }
 }
 
@@ -58,84 +62,75 @@ function assertOk(response: Response, description: string, notFound?: () => Erro
   }
 
   if (response.status === 429) {
-    throw new RateLimitedError(`Rate limited while fetching ${description}`);
+    throw new RateLimitedError(`Limite de requisições atingido ao buscar ${description}`);
   }
 
   if (!response.ok) {
-    throw new UpstreamError(response.status, `Failed to fetch ${description}`);
+    throw new UpstreamError(response.status, `Falha ao buscar ${description}`);
   }
 }
 
-// Get episode by ID
-export async function getEpisodeById(id: number) {
+// Busca um episódio pelo id da API.
+export async function getEpisodeById(id: number): Promise<Episode> {
   const response = await fetchWithTimeout(`${getEnv().RICK_AND_MORTY_API_BASE_URL}/episode/${id}`);
 
   assertOk(
     response,
-    `episode with id ${id}`,
-    () => new EpisodeNotFoundError(`Episode with id ${id} not found`),
+    `episódio com id ${id}`,
+    () => new EpisodeNotFoundError(`Episódio com id ${id} não encontrado`),
   );
 
   try {
-    const data = await response.json();
-    return episodeSchema.parse(data);
+    return episodeSchema.parse(await response.json());
   } catch (error) {
     throw invalidPayload("episódio", error);
   }
 }
 
-// Get episode by code (S01E01 format)
-export async function getEpisodeByCode(code: string) {
+// Busca um episódio pelo código (formato S01E01).
+export async function getEpisodeByCode(code: string): Promise<Episode> {
   const response = await fetchWithTimeout(
     `${getEnv().RICK_AND_MORTY_API_BASE_URL}/episode?episode=${encodeURIComponent(code)}`,
   );
 
   assertOk(
     response,
-    `episode with code ${code}`,
-    () => new EpisodeNotFoundError(`Episode with code ${code} not found`),
+    `episódio com código ${code}`,
+    () => new EpisodeNotFoundError(`Episódio com código ${code} não encontrado`),
   );
 
+  let results: Episode[];
   try {
-    const data = await response.json();
-    const paginatedData = paginatedEpisodeSchema.parse(data);
-
-    const [first] = paginatedData.results;
-    if (!first) {
-      throw new EpisodeNotFoundError(`Episode with code ${code} not found`);
-    }
-
-    return first;
+    results = paginatedEpisodeSchema.parse(await response.json()).results;
   } catch (error) {
-    // If it's already an EpisodeNotFoundError, re-throw it
-    if (error instanceof EpisodeNotFoundError) {
-      throw error;
-    }
-
     throw invalidPayload("episódio por código", error);
   }
+
+  const [first] = results;
+  if (!first) {
+    throw new EpisodeNotFoundError(`Episódio com código ${code} não encontrado`);
+  }
+  return first;
 }
 
-// Get characters by IDs
-export async function getCharactersByIds(ids: number[]) {
+// Busca vários personagens em uma única requisição.
+export async function getCharactersByIds(ids: number[]): Promise<Character[]> {
   // Defesa em profundidade: /character/ sem ids listaria todos os personagens.
   if (ids.length === 0) {
-    throw new RangeError("getCharactersByIds requires at least one id");
+    throw new RangeError("getCharactersByIds exige ao menos um id");
   }
   if (!ids.every((id) => Number.isInteger(id) && id > 0)) {
-    throw new RangeError("Character ids must be positive integers");
+    throw new RangeError("Os ids de personagem devem ser inteiros positivos");
   }
 
   const response = await fetchWithTimeout(
     `${getEnv().RICK_AND_MORTY_API_BASE_URL}/character/${ids.join(",")}`,
   );
 
-  assertOk(response, `characters with ids ${ids.join(",")}`);
+  assertOk(response, `personagens com ids ${ids.join(",")}`);
 
   try {
-    const data = await response.json();
-    const parsedData = normalizedCharacterSchema.parse(data);
-    return parsedData;
+    return normalizedCharacterSchema.parse(await response.json());
   } catch (error) {
     throw invalidPayload("personagens", error);
   }

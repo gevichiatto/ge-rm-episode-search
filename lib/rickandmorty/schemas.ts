@@ -22,6 +22,13 @@ export const paginatedEpisodeSchema = z.object({
   results: z.array(episodeSchema),
 });
 
+// Origem/localização de um personagem.
+const placeSchema = z.object({
+  name: z.string(),
+  // A API devolve "" quando a origem/localização é desconhecida.
+  url: z.string(),
+});
+
 // Character schema
 export const characterSchema = z.object({
   id: z.number().int(),
@@ -30,16 +37,8 @@ export const characterSchema = z.object({
   species: z.string(),
   type: z.string(),
   gender: z.string(),
-  origin: z.object({
-    name: z.string(),
-    // A API devolve "" quando a origem/localização é desconhecida.
-    url: z.string(),
-  }),
-  location: z.object({
-    name: z.string(),
-    // A API devolve "" quando a origem/localização é desconhecida.
-    url: z.string(),
-  }),
+  origin: placeSchema,
+  location: placeSchema,
   image: z.string().url(),
   episode: z.array(z.string()),
   url: z.string().url(),
@@ -57,3 +56,4 @@ export const normalizedCharacterSchema = z
   });
 
 export type Episode = z.infer<typeof episodeSchema>;
+export type Character = z.infer<typeof characterSchema>;

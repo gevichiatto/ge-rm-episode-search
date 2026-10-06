@@ -58,7 +58,7 @@ export function parseEpisodeInput(input: string): EpisodeInput {
   const result = episodeInputSchema.safeParse(input);
 
   if (!result.success) {
-    throw new ValidationError(result.error?.issues?.[0]?.message ?? "Entrada inválida.");
+    throw new ValidationError(result.error.issues[0]?.message ?? "Entrada inválida.");
   }
 
   return result.data;
