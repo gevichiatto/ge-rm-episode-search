@@ -59,7 +59,7 @@ tests/          lib/, config/ e components/ (Vitest)
 
 ## Decisões
 
-- **"Número do episódio" aceita os dois formatos.** O enunciado é ambíguo, então a busca aceita o **id da API** (`1`–`51`) e o **código** (`S01E01`, sem diferenciar maiúsculas). O custo é baixo: a API já expõe `/episode?episode=` para o código.
+- **"Número do episódio" aceita os dois formatos.** O enunciado é ambíguo, então a busca aceita o **id da API** (inteiro positivo; se não existir, a API responde 404) e o **código** (`S01E01`, sem diferenciar maiúsculas). O custo é baixo: a API já expõe `/episode?episode=` para o código.
 - **Só Next.js, sem backend próprio.** Server Components chamam a API pública diretamente; não há API route.
 - **Client defensivo.** O código do episódio é codificado na URL, ids inválidos ou vazios são recusados dentro do próprio client e o ambiente só é lido no primeiro uso. Payload inválido vira `UpstreamError` sem status, e o log traz só um resumo do erro.
 - **Cabeçalhos de segurança.** `proxy.ts` gera uma CSP com nonce por requisição (`lib/security/csp.ts`; `unsafe-eval` só em dev), e `next.config.ts` define `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` e HSTS. Sem `upgrade-insecure-requests`, para não quebrar `next start` em `http://localhost`.
